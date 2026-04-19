@@ -1,5 +1,7 @@
 """Pytest tests for Week 7: Moonlight Festival Control Booth."""
 
+import pytest
+
 from src.challenges import (
     order_festival_alerts,
     order_festival_alerts_stable,
@@ -19,7 +21,9 @@ def test_order_festival_alerts_normal_case() -> None:
         (3, "Lost umbrella report"),
     ]
 
-    assert order_festival_alerts(alerts) == [
+    result = order_festival_alerts(alerts)
+
+    assert result == [
         "Main Stage microphone failed",
         "Food court power issue",
         "Lost umbrella report",
@@ -35,7 +39,7 @@ def test_order_festival_alerts_one_alert() -> None:
     assert order_festival_alerts(alerts) == ["Storm warning"]
 
 
-def test_order_festival_alerts_handles_duplicate_priorities() -> None:
+def test_order_festival_alerts_duplicate_priorities() -> None:
     alerts = [
         (2, "Lighting check"),
         (2, "Backstage cleanup"),
@@ -44,8 +48,24 @@ def test_order_festival_alerts_handles_duplicate_priorities() -> None:
 
     result = order_festival_alerts(alerts)
 
+    # First must be highest priority
     assert result[0] == "Security call"
-    assert set(result[1:]) == {"Lighting check", "Backstage cleanup"}
+
+    # Remaining can be in any order, but must match exactly
+    assert sorted(result[1:]) == sorted(["Lighting check", "Backstage cleanup"])
+
+
+def test_order_festival_alerts_large_input_consistency() -> None:
+    alerts = [(i % 3 + 1, f"Alert {i}") for i in range(100)]
+
+    result = order_festival_alerts(alerts)
+
+    # Ensure result length matches input
+    assert len(result) == len(alerts)
+
+    # Ensure smallest priority appears first
+    first_priority = min(p for p, _ in alerts)
+    assert any(title for p, title in alerts if p == first_priority and title == result[0])
 
 
 # -----------------------------
@@ -68,30 +88,23 @@ def test_order_festival_alerts_stable_normal_case() -> None:
 
 def test_order_festival_alerts_stable_keeps_input_order_for_ties() -> None:
     alerts = [
-        (1, "Security check at North Gate"),
-        (1, "Lighting issue at East Stage"),
-        (2, "Performer arrived backstage"),
+        (1, "A"),
+        (1, "B"),
+        (1, "C"),
     ]
 
-    assert order_festival_alerts_stable(alerts) == [
-        "Security check at North Gate",
-        "Lighting issue at East Stage",
-        "Performer arrived backstage",
-    ]
+    assert order_festival_alerts_stable(alerts) == ["A", "B", "C"]
 
 
-def test_order_festival_alerts_stable_all_same_priority() -> None:
+def test_order_festival_alerts_stable_mixed_ties() -> None:
     alerts = [
-        (2, "Check generator"),
-        (2, "Refill water station"),
-        (2, "Move spare chairs"),
+        (2, "X"),
+        (1, "A"),
+        (1, "B"),
+        (2, "Y"),
     ]
 
-    assert order_festival_alerts_stable(alerts) == [
-        "Check generator",
-        "Refill water station",
-        "Move spare chairs",
-    ]
+    assert order_festival_alerts_stable(alerts) == ["A", "B", "X", "Y"]
 
 
 def test_order_festival_alerts_stable_empty_input() -> None:
@@ -118,12 +131,13 @@ def test_top_k_festival_alerts_normal_case() -> None:
 
 
 def test_top_k_festival_alerts_k_zero() -> None:
-    alerts = [
-        (1, "Stage power failure"),
-        (2, "Ticket scanner issue"),
-    ]
-
+    alerts = [(1, "A"), (2, "B")]
     assert top_k_festival_alerts(alerts, 0) == []
+
+
+def test_top_k_festival_alerts_k_negative() -> None:
+    alerts = [(1, "A"), (2, "B")]
+    assert top_k_festival_alerts(alerts, -5) == []
 
 
 def test_top_k_festival_alerts_k_larger_than_input() -> None:
@@ -132,7 +146,9 @@ def test_top_k_festival_alerts_k_larger_than_input() -> None:
         (1, "Main Stage microphone failed"),
     ]
 
-    assert top_k_festival_alerts(alerts, 5) == [
+    result = top_k_festival_alerts(alerts, 10)
+
+    assert result == [
         "Main Stage microphone failed",
         "Food court power issue",
     ]
@@ -144,16 +160,16 @@ def test_top_k_festival_alerts_empty_input() -> None:
 
 def test_top_k_festival_alerts_duplicate_priorities() -> None:
     alerts = [
-        (1, "Storm warning"),
-        (1, "Stage power failure"),
-        (2, "Ticket scanner issue"),
-        (2, "Backstage delay"),
+        (1, "A"),
+        (1, "B"),
+        (2, "C"),
+        (2, "D"),
     ]
 
     result = top_k_festival_alerts(alerts, 2)
 
     assert len(result) == 2
-    assert set(result) == {"Storm warning", "Stage power failure"}
+    assert set(result) == {"A", "B"}
 
 
 # -----------------------------
@@ -180,9 +196,21 @@ def test_peek_next_festival_alert_does_not_modify_original_input() -> None:
         (1, "Security call"),
         (3, "Lost scarf report"),
     ]
+
     original = alerts.copy()
 
     result = peek_next_festival_alert(alerts)
 
     assert result == "Security call"
     assert alerts == original
+
+
+def test_peek_next_festival_alert_with_same_priorities() -> None:
+    alerts = [
+        (1, "A"),
+        (1, "B"),
+    ]
+
+    result = peek_next_festival_alert(alerts)
+
+    assert result in {"A", "B"}
