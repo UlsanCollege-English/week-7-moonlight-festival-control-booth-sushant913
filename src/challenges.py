@@ -18,20 +18,17 @@ def order_festival_alerts(alerts: List[Tuple[int, str]]) -> List[str]:
         (priority, title)
 
     Smaller priority numbers are handled first.
-
-    Uses a min-heap to process alerts efficiently.
     """
     if not alerts:
         return []
 
     heap: list[tuple[int, str]] = []
 
-    # Build heap
     for priority, title in alerts:
         heapq.heappush(heap, (priority, title))
 
-    # Extract in priority order
     result: list[str] = []
+
     while heap:
         _, title = heapq.heappop(heap)
         result.append(title)
@@ -43,21 +40,18 @@ def order_festival_alerts_stable(alerts: List[Tuple[int, str]]) -> List[str]:
     """
     Return alert titles in priority order.
 
-    If two alerts share the same priority, the one that appeared
-    earlier in the input list is handled first (stable behavior).
-
-    Achieved by adding the index as a secondary sort key.
+    If two alerts have the same priority, preserve input order.
     """
     if not alerts:
         return []
 
     heap: list[tuple[int, int, str]] = []
 
-    # Include index to preserve order for ties
     for index, (priority, title) in enumerate(alerts):
         heapq.heappush(heap, (priority, index, title))
 
     result: list[str] = []
+
     while heap:
         _, _, title = heapq.heappop(heap)
         result.append(title)
@@ -69,23 +63,24 @@ def top_k_festival_alerts(alerts: List[Tuple[int, str]], k: int) -> List[str]:
     """
     Return the titles of the k most urgent alerts.
 
-    Rules:
-    - k <= 0 → return []
-    - k > len(alerts) → return all alerts in priority order
+    If k <= 0, return an empty list.
+    If k is larger than the number of alerts, return as many as possible.
+
+    Uses stable ordering for same-priority alerts.
     """
     if k <= 0 or not alerts:
         return []
 
-    heap: list[tuple[int, str]] = []
+    heap: list[tuple[int, int, str]] = []
 
-    for priority, title in alerts:
-        heapq.heappush(heap, (priority, title))
+    # 🔥 FIX: include index for stable ordering
+    for index, (priority, title) in enumerate(alerts):
+        heapq.heappush(heap, (priority, index, title))
 
     result: list[str] = []
 
-    # Extract only k items (or fewer if not enough alerts)
     for _ in range(min(k, len(heap))):
-        _, title = heapq.heappop(heap)
+        _, _, title = heapq.heappop(heap)
         result.append(title)
 
     return result
@@ -93,21 +88,14 @@ def top_k_festival_alerts(alerts: List[Tuple[int, str]], k: int) -> List[str]:
 
 def peek_next_festival_alert(alerts: List[Tuple[int, str]]) -> Optional[str]:
     """
-    Return the title of the next alert to handle without modifying
-    the original alerts list.
+    Return the title of the next alert without modifying the original list.
 
-    Uses heapify on a copy to avoid side effects.
-
-    Returns:
-        - title (str) if alerts exist
-        - None if alerts is empty
+    If alerts is empty, return None.
     """
     if not alerts:
         return None
 
-    # Create a copy so original list is unchanged
-    heap = list(alerts)
+    heap = list(alerts)  # copy
     heapq.heapify(heap)
 
-    # Peek (smallest priority element)
     return heap[0][1]
