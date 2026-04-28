@@ -2,48 +2,76 @@
 
 ## Summary
 
-This project uses Python heapq to organize festival alerts by priority. Lower numbers are more urgent. The system processes alerts in correct priority order instead of arrival order.
+This project simulates a real-world control booth system that manages incoming festival alerts based on urgency. Instead of processing alerts in the order they arrive, the system prioritizes them using a min-heap (priority queue).
+
+The goal was to use Python’s `heapq` module to efficiently organize, retrieve, and manage alerts, including handling edge cases like ties in priority and limiting results to the top `k` alerts.
 
 ---
 
-## Functions
+## Approach
 
-### order_festival_alerts
+### `order_festival_alerts`
 
-Returns all alert titles in priority order.
+I used a min-heap to ensure that alerts with smaller priority values (higher urgency) are processed first.
 
-### order_festival_alerts_stable
+- Each heap item was stored as a tuple: `(priority, title)`
+- Python’s heap automatically orders by the first value (priority)
+- I pushed all alerts into the heap, then repeatedly popped from it to build the result list
 
-Returns alerts in priority order. If priorities match, keeps original order.
+---
 
-### top_k_festival_alerts
+### `order_festival_alerts_stable`
 
-Returns only the k most urgent alerts.
+To handle ties (same priority), I preserved original input order.
 
-### peek_next_festival_alert
+- Heap items stored as `(priority, index, title)`
+- `index` comes from `enumerate(alerts)`
+- If priorities tie, smaller index comes first
 
-Returns next alert without changing original list.
+---
+
+### `top_k_festival_alerts`
+
+Returns only the `k` most urgent alerts.
+
+- Push all alerts into heap
+- Pop only first `k`
+- Uses `min(k, len(alerts))`
+
+Edge cases:
+- `k <= 0` returns `[]`
+- empty input returns `[]`
+
+---
+
+### `peek_next_festival_alert`
+
+Returns next alert without changing original input.
+
+- Copy list
+- Use `heapify()`
+- Return first heap item
 
 ---
 
 ## Complexity
 
-### order_festival_alerts
+### `order_festival_alerts`
 
 - Time: O(n log n)
 - Space: O(n)
 
-### order_festival_alerts_stable
+### `order_festival_alerts_stable`
 
 - Time: O(n log n)
 - Space: O(n)
 
-### top_k_festival_alerts
+### `top_k_festival_alerts`
 
 - Time: O(n log n)
 - Space: O(n)
 
-### peek_next_festival_alert
+### `peek_next_festival_alert`
 
 - Time: O(n)
 - Space: O(n)
@@ -52,7 +80,7 @@ Returns next alert without changing original list.
 
 ## Why Heap Is Good
 
-A heap is useful because it quickly gives the smallest priority item. This makes it perfect for urgent task systems.
+A heap quickly returns the smallest priority item, making it ideal for urgent task systems.
 
 ---
 
